@@ -14,10 +14,19 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to open txt file: %v", err))
 	}
+	defer file.Close()
 
 	totalSafeReports := CalculateNumSafeReports(file)
 
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to reset file poistion: %v", err))
+	}
+
+	totalSafeReportsWithDampener := CalculateNumSafeReportsWithDampener(file)
+
 	println("Total safe reports:", totalSafeReports)
+	println("Total safe reports w/ dampener: ", totalSafeReportsWithDampener)
 }
 
 func CalculateNumSafeReports(reportsData io.Reader) int {
@@ -31,14 +40,52 @@ func CalculateNumSafeReports(reportsData io.Reader) int {
 		reportData, err := StringSliceToIntSlice(stringifiedReportData)
 		if err != nil {
 			fmt.Printf("Could not covert report to int vals, %s. %v", stringifiedReportData, err)
+			continue
 		}
 
-		if IsLevelsDecreasing(reportData) || IsLevelsIncreasing(reportData) {
+		if IsSafe(reportData) {
 			numSafeReports++
 		}
 	}
 
 	return numSafeReports
+}
+
+func CalculateNumSafeReportsWithDampener(reportsData io.Reader) int {
+	var numSafeReports int
+	scanner := bufio.NewScanner(reportsData)
+
+	for scanner.Scan() {
+		report := scanner.Text()
+
+		stringifiedReportData := strings.Fields(report)
+		reportData, err := StringSliceToIntSlice(stringifiedReportData)
+		if err != nil {
+			fmt.Printf("Could not covert report to int vals, %s. %v", stringifiedReportData, err)
+			continue
+		}
+
+		if IsSafe(reportData) {
+			numSafeReports++
+		} else {
+			for i := range report {
+				subReport := GetSubReport(i, reportData)
+				if IsSafe(subReport) {
+					numSafeReports++
+					break
+				}
+			}
+		}
+	}
+
+	return numSafeReports
+}
+
+func IsSafe(reportData []int) bool {
+	if IsLevelsDecreasing(reportData) || IsLevelsIncreasing(reportData) {
+		return true
+	}
+	return false
 }
 
 func IsLevelsIncreasing(reportLevels []int) bool {
@@ -86,4 +133,15 @@ func StringSliceToIntSlice(strSlice []string) ([]int, error) {
 	}
 
 	return intSlice, nil
+}
+
+func GetSubReport(indexToRemove int, report []int) []int {
+	if indexToRemove < 0 || indexToRemove >= len(report) {
+		return report
+	}
+
+	subReport := make([]int, 0)
+	subReport = append(subReport, report[:indexToRemove]...)
+	subReport = append(subReport, report[indexToRemove+1:]...)
+	return subReport
 }
