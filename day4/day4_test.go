@@ -121,6 +121,30 @@ MXMXAXMASX`
 	})
 }
 
+func TestCalcMasCrosses(t *testing.T) {
+	puzzleText := `.M.S......
+..A..MSMS.
+.M.S.MAA..
+..A.ASMSM.
+.M.S.M....
+..........
+S.S.S.S.S.
+.A.A.A.A..
+M.M.M.M.M.
+..........`
+	mockPuzzleFile := strings.NewReader(puzzleText)
+	mockPuzzle := day4.LoadPuzzle(mockPuzzleFile)
+
+	t.Run("Calculates the correct number of crosses", func(t *testing.T) {
+		got := day4.CalcMasCrosses(mockPuzzle)
+		want := 9
+
+		if got != want {
+			t.Errorf("Expected %d, instead got %d", want, got)
+		}
+	})
+}
+
 func TestReverseWord(t *testing.T) {
 	cases := []struct {
 		name           string

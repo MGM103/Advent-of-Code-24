@@ -18,9 +18,14 @@ func main() {
 	const WORD_TO_FIND string = "XMAS"
 
 	puzzle := LoadPuzzle(puzzleFile)
-	totalMatches := CalcTotalMatches(puzzle, WORD_TO_FIND)
 
+	// Part 1
+	totalMatches := CalcTotalMatches(puzzle, WORD_TO_FIND)
 	println("Total matches: ", totalMatches)
+
+	// Part 2
+	totalXmasCrosses := CalcMasCrosses(puzzle)
+	println("Total x-mas crosses: ", totalXmasCrosses)
 }
 
 func LoadPuzzle(puzzleFile io.Reader) [][]rune {
@@ -36,6 +41,40 @@ func LoadPuzzle(puzzleFile io.Reader) [][]rune {
 	return puzzle
 }
 
+// PART 2
+func CalcMasCrosses(puzzle [][]rune) int {
+	const CROSS_SIZE = 3
+	totalMatches := 0
+	lenRows := len(puzzle)
+	lenCols := len(puzzle[0])
+
+	if lenRows < CROSS_SIZE || lenCols < CROSS_SIZE {
+		return 0
+	}
+
+	for rows := 0; rows <= lenRows-CROSS_SIZE; rows++ {
+		for cols := 0; cols <= lenCols-CROSS_SIZE; cols++ {
+			diagonal1 := string([]rune{puzzle[rows][cols], puzzle[rows+1][cols+1], puzzle[rows+2][cols+2]})
+			diagonal2 := string([]rune{puzzle[rows][cols+2], puzzle[rows+1][cols+1], puzzle[rows+2][cols]})
+
+			if IsDiagonalCrossMatch(diagonal1) && IsDiagonalCrossMatch(diagonal2) {
+				totalMatches++
+			}
+		}
+	}
+
+	return totalMatches
+}
+
+func IsDiagonalCrossMatch(diagonalSegment string) bool {
+	if diagonalSegment == "MAS" || diagonalSegment == "SAM" {
+		return true
+	}
+
+	return false
+}
+
+// PART 1
 func CalcTotalMatches(puzzle [][]rune, word string) int {
 	return CalcDiagonalMatches(puzzle, word) + CalcHorizontalMatches(puzzle, word) + CalcVerticalMatches(puzzle, word)
 }
