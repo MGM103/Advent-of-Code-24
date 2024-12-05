@@ -20,7 +20,7 @@ func main() {
 
 	_, err = file.Seek(0, 0)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to reset file poistion: %v", err))
+		panic(fmt.Sprintf("Failed to reset file position: %v", err))
 	}
 
 	totalSafeReportsWithDampener := CalculateNumSafeReportsWithDampener(file)
