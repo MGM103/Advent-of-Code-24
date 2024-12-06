@@ -18,9 +18,12 @@ func main() {
 
 	orderingData := GetOrderData(manualUpdatesFile)
 	manualPageOrders := GetPageOrders(manualUpdatesFile)
-	validOrderings := GetValidPageOrders(orderingData, manualPageOrders)
+	validOrderings, invalidOrderings := GetGroupedPageOrders(orderingData, manualPageOrders)
+	correctedOrderings := ValidateIncorrectOrderings(invalidOrderings, orderingData)
 	sumOfMiddlePages := GetSumMiddlePagesValidOrderings(validOrderings)
+	sumOfCorrectedOrderings := GetSumMiddlePagesValidOrderings(correctedOrderings)
 	println("Sum of middle pages: ", sumOfMiddlePages)
+	println("Sum of corrected orderings middle pages", sumOfCorrectedOrderings)
 }
 
 func GetOrderData(manualUpdates io.ReadSeeker) map[int][]int {
@@ -81,8 +84,9 @@ func GetPageOrders(manualUpdates io.ReadSeeker) [][]int {
 	return pageOrders
 }
 
-func GetValidPageOrders(orderingData map[int][]int, pageOrders [][]int) [][]int {
+func GetGroupedPageOrders(orderingData map[int][]int, pageOrders [][]int) ([][]int, [][]int) {
 	validPageOrders := make([][]int, 0)
+	invalidPageOrders := make([][]int, 0)
 
 	for _, pageOrder := range pageOrders {
 		pagesSeen := make(map[int]bool, 0)
@@ -105,10 +109,31 @@ func GetValidPageOrders(orderingData map[int][]int, pageOrders [][]int) [][]int 
 
 		if validOrder {
 			validPageOrders = append(validPageOrders, pageOrder)
+		} else {
+			invalidPageOrders = append(invalidPageOrders, pageOrder)
 		}
 	}
 
-	return validPageOrders
+	return validPageOrders, invalidPageOrders
+}
+
+func ValidateIncorrectOrderings(invalidOrderings [][]int, orderingData map[int][]int) [][]int {
+	for _, invalidOrder := range invalidOrderings {
+		for i := range invalidOrder {
+			for j := len(invalidOrder) - 1; j > i; j-- {
+				for _, requiredPageAfter := range orderingData[invalidOrder[j]] {
+					if requiredPageAfter == invalidOrder[i] {
+						temp := invalidOrder[i]
+						invalidOrder[i] = invalidOrder[j]
+						invalidOrder[j] = temp
+					}
+				}
+			}
+
+		}
+	}
+
+	return invalidOrderings
 }
 
 func GetSumMiddlePagesValidOrderings(validOrderings [][]int) int {

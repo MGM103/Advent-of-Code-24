@@ -19,9 +19,9 @@ func TestGetOrderData(t *testing.T) {
 	t.Run("Extracts correct ordering relationship from data", func(t *testing.T) {
 		got := day5.GetOrderData(mockOrderingFile)
 		want := map[int][]int{
-			47: []int{53},
-			97: []int{13, 61, 47},
-			75: []int{53},
+			47: {53},
+			97: {13, 61, 47},
+			75: {53},
 		}
 
 		if !reflect.DeepEqual(got, want) {
@@ -83,11 +83,43 @@ func TestGetValidPageOrders(t *testing.T) {
 	mockPageOrders := day5.GetPageOrders(mockManualFile)
 
 	t.Run("Test valid page orders are retrieved", func(t *testing.T) {
-		got := day5.GetValidPageOrders(mockOrderData, mockPageOrders)
-		want := [][]int{{75, 47, 61, 53, 29}, {97, 61, 53, 29, 13}, {75, 29, 13}}
+		gotValid, gotInvalid := day5.GetGroupedPageOrders(mockOrderData, mockPageOrders)
+		wantValid := [][]int{{75, 47, 61, 53, 29}, {97, 61, 53, 29, 13}, {75, 29, 13}}
+		wantInvalid := [][]int{{75, 97, 47, 61, 53}, {61, 13, 29}, {97, 13, 75, 29, 47}}
+
+		if !reflect.DeepEqual(gotValid, wantValid) {
+			t.Errorf("Expected %v, instead got %v", wantValid, gotValid)
+		}
+
+		if !reflect.DeepEqual(gotInvalid, wantInvalid) {
+			t.Errorf("Expected %v, instead got %v", wantInvalid, gotInvalid)
+		}
+	})
+}
+
+func TestValidateIncorrectOrderings(t *testing.T) {
+	invalidOrderings := [][]int{{75, 97, 47, 61, 53}, {61, 13, 29}, {97, 13, 75, 29, 47}}
+	orderingData := map[int][]int{
+		47: {53, 13, 61, 29},
+		97: {13, 61, 47, 29, 53, 75},
+		75: {53, 47, 61, 13},
+		29: {13},
+		53: {29, 13},
+		61: {53, 29},
+	}
+
+	t.Run("Modifies the order correctly", func(t *testing.T) {
+		got := day5.ValidateIncorrectOrderings(invalidOrderings, orderingData)
+		want := [][]int{{97, 75, 47, 61, 53}, {61, 29, 13}, {97, 75, 47, 29, 13}}
+		gotSum := day5.GetSumMiddlePagesValidOrderings(got)
+		wantSum := 123
 
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Expected %v, instead got %v", want, got)
+		}
+
+		if gotSum != wantSum {
+			t.Errorf("Expected %d, instead got: %v", wantSum, gotSum)
 		}
 	})
 }
